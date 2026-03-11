@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eletivas — Consulta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:       #2e7d32;
+      --green-dark:  #1b5e20;
+      --green-light: #e8f5e9;
+      --green-mid:   #c8e6c9;
+      --bg:          #f4f6f4;
+      --surface:     #ffffff;
+      --border:      #d0dbd0;
+      --text:        #1a2e1a;
+      --muted:       #607060;
+      --danger:      #c62828;
+      --radius:      6px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════
+       LOGIN
+    ═══════════════════════════════════════════ */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #388e3c 100%);
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-logo .icon {
+      background: var(--green);
+      color: white;
+      width: 52px; height: 52px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+    }
+    .login-logo h1 {
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .login-logo h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.02em;
+    }
+
+    .login-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .login-field {
+      margin-bottom: 14px;
+    }
+    .login-field label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .login-field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.95rem;
+      padding: 10px 13px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .login-field input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+    }
+
+    .login-btn {
+      width: 100%;
+      background: var(--green);
+      border: none;
+      border-radius: var(--radius);
+      color: white;
+      cursor: pointer;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 11px;
+      margin-top: 8px;
+      transition: background 0.15s;
+      letter-spacing: 0.03em;
+    }
+    .login-btn:hover { background: var(--green-dark); }
+    .login-btn:disabled { background: #a5d6a7; cursor: not-allowed; }
+
+    .login-error {
+      background: #ffebee;
+      border: 1px solid #ef9a9a;
+      border-left: 4px solid var(--danger);
+      border-radius: var(--radius);
+      color: var(--danger);
+      font-size: 0.82rem;
+      padding: 9px 12px;
+      margin-top: 12px;
+      display: none;
+    }
+    .login-error.show { display: block; }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ═══════════════════════════════════════════
+       APP
+    ═══════════════════════════════════════════ */
+    #app-screen { display: none; }
+
+    /* HEADER */
+    .header-top {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand h1 { font-size: 0.72rem; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .brand h2 { font-size: 1.35rem; font-weight: 700; color: var(--green); letter-spacing: 0.02em; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .escola { font-size: 0.8rem; color: var(--muted); text-align: right; line-height: 1.5; }
+    .escola strong { display: block; color: var(--text); font-size: 0.88rem; }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--green-light);
+      border: 1px solid var(--green-mid);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--green-dark);
+      font-weight: 600;
+    }
+    .user-info .avatar {
+      background: var(--green);
+      color: white;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .logout-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.78rem;
+      padding: 5px 11px;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: #ffebee;
+    }
+
+    .header-bar { background: var(--green); height: 6px; }
+
+    /* CONTAINER */
+    .container { max-width: 1080px; margin: 0 auto; padding: 28px 32px; }
+
+    /* PAGE TITLE */
+    .page-title {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 22px; padding-bottom: 14px;
+      border-bottom: 2px solid var(--green-mid);
+    }
+    .page-title .icon {
+      background: var(--green); color: white;
+      width: 34px; height: 34px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .page-title h3 { font-size: 1.1rem; font-weight: 700; color: var(--green-dark); }
+    .page-title span { font-size: 0.82rem; color: var(--muted); }
+
+    /* STATS */
+    .stats { display: flex; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 4px solid var(--green); border-radius: var(--radius);
+      padding: 12px 18px; flex: 1; min-width: 110px;
+    }
+    .stat-card .val { font-size: 1.7rem; font-weight: 700; color: var(--green); line-height: 1; }
+    .stat-card .lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+
+    /* TABS */
+    .tabs { display: flex; border-bottom: 2px solid var(--green); margin-bottom: 18px; }
+    .tab {
+      background: none; border: none; border-bottom: 3px solid transparent;
+      margin-bottom: -2px; color: var(--muted); cursor: pointer;
+      font-family: 'Source Sans 3', sans-serif; font-size: 0.88rem; font-weight: 600;
+      letter-spacing: 0.04em; padding: 9px 20px; text-transform: uppercase;
+      transition: color 0.15s, background 0.15s;
+    }
+    .tab:hover:not(.active) { background: var(--green-light); color: var(--green); }
+    .tab.active { background: var(--green); color: white; border-radius: 4px 4px 0 0; }
+
+    /* SEARCH */
+    .search-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px;
+    }
+    .search-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .search-field { flex: 1; min-width: 200px; }
+    .search-field-sm { min-width: 150px; }
+    .field-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 5px;
+    }
+
+    input[type="text"], select {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-family: 'Source Sans 3', sans-serif; font-size: 0.92rem;
+      padding: 8px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: var(--green); box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+    }
+
+    .btn {
+      background: var(--green); border: 1px solid var(--green-dark); border-radius: var(--radius);
+      color: white; cursor: pointer; font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.88rem; font-weight: 600; padding: 8px 20px;
+      transition: background 0.15s; white-space: nowrap;
+    }
+    .btn:hover { background: var(--green-dark); }
+    .btn.outline { background: white; color: var(--green); border-color: var(--green); }
+    .btn.outline:hover { background: var(--green-light); }
+
+    /* RESULTS */
+    #results-info { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; min-height: 18px; }
+
+    /* TABLE */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    thead tr { background: var(--green); color: white; }
+    thead th { padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--green-light); }
+    tbody tr.expandable-row.open { background: var(--green-light); font-weight: 600; }
+    tbody td { padding: 9px 14px; vertical-align: middle; }
+    td.nome { font-weight: 600; color: var(--green-dark); }
+
+    .expand-row { display: none; }
+    .expand-row.open { display: table-row; }
+    .expand-row td { padding: 0 !important; background: #f0f7f0; }
+    .expand-inner { padding: 12px 24px 16px; border-top: 2px solid var(--green-mid); }
+    .expand-inner table thead tr { background: var(--green-mid); }
+    .expand-inner table thead th { color: var(--green-dark); }
+    .expand-inner table tbody tr { cursor: default; }
+    .expand-inner table tbody tr:hover { background: white; }
+
+    /* BADGE */
+    .badge {
+      border-radius: 3px; font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.05em; padding: 2px 7px; text-transform: uppercase;
+      white-space: nowrap; display: inline-block;
+    }
+    .badge.mat  { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .badge.ling { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+    .badge.nat  { background: #e0f2f1; color: #00695c; border: 1px solid #80cbc4; }
+    .badge.hum  { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+    .badge.def  { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+
+    .nota { font-weight: 700; color: var(--green-dark); }
+    .chevron { color: var(--green); font-size: 0.72rem; transition: transform 0.2s; display: inline-block; }
+    .expandable-row.open .chevron { transform: rotate(90deg); }
+
+    /* EMPTY / LOADING */
+    .empty { text-align: center; padding: 48px 20px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+    .empty .icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.4; }
+    .loading { display: flex; justify-content: center; padding: 36px; }
+    .spinner { width: 26px; height: 26px; border: 3px solid var(--green-mid); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ERROR */
+    .error-banner {
+      background: #ffebee; border: 1px solid #ef9a9a; border-left: 4px solid var(--danger);
+      border-radius: var(--radius); color: var(--danger); font-size: 0.85rem;
+      padding: 10px 14px; margin-bottom: 16px; display: none;
+    }
+    .error-banner.show { display: block; }
+
+    footer { text-align: center; padding: 20px; font-size: 0.78rem; color: var(--muted); border-top: 1px solid var(--border); margin-top: 40px; }
+
+    @media (max-width: 640px) {
+      .container { padding: 16px; }
+      .header-top { padding: 10px 16px; }
+      .col-area, .col-prof { display: none; }
+      .user-info span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ TELA DE LOGIN ═══════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">📋</div>
+      <h1>Sistema</h1>
+      <h2>ELETIVAS</h2>
+    </div>
+    <p class="login-title">Acesso Restrito — Secretaria Escolar</p>
+
+    <div class="login-field">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="Digite seu usuário"
+             onkeydown="if(event.key==='Enter') document.getElementById('login-pass').focus()"/>
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="Digite sua senha"
+             onkeydown="if(event.key==='Enter') doLogin()"/>
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+
+    <div class="login-error" id="login-error">
+      ⚠️ Usuário ou senha incorretos.
+    </div>
+
+    <div class="login-footer">Secretaria Escolar</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP PRINCIPAL ═══════════════════ -->
+<div id="app-screen">
+
+  <div class="header-top">
+    <div class="brand">
+      <h1>Sistema</h1>
+      <h2>ELETIVAS</h2>
+    </div>
+    <div class="header-right">
+      <div class="escola">
+        <strong>Consulta de Disciplinas Eletivas</strong>
+        Secretaria Escolar
+      </div>
+      <div class="user-info">
+        <div class="avatar" id="user-avatar">?</div>
+        <span id="user-name">—</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="header-bar"></div>
+
+  <div class="container">
+
+    <div class="page-title">
+      <div class="icon">📋</div>
+      <div>
+        <h3>Consulta de Eletivas</h3>
+        <span>Pesquise por aluno, disciplina, área ou ano letivo</span>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card"><div class="val" id="stat-alunos">—</div><div class="lbl">Alunos</div></div>
+      <div class="stat-card"><div class="val" id="stat-eletivas">—</div><div class="lbl">Eletivas</div></div>
+      <div class="stat-card"><div class="val" id="stat-registros">—</div><div class="lbl">Registros</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('alunos')">Por Aluno</button>
+      <button class="tab" onclick="setTab('eletivas')">Por Eletiva</button>
+      <button class="tab" onclick="setTab('busca')">Busca Geral</button>
+    </div>
+
+    <div class="search-panel">
+      <div class="search-row">
+        <div class="search-field">
+          <span class="field-label" id="search-label">Nome do aluno</span>
+          <input type="text" id="search-input" placeholder="Digite para buscar..." onkeydown="if(event.key==='Enter') buscar()"/>
+        </div>
+        <div class="search-field-sm">
+          <span class="field-label">Área</span>
+          <select id="filter-area"><option value="">Todas as áreas</option></select>
+        </div>
+        <div class="search-field-sm">
+          <span class="field-label">Ano Letivo</span>
+          <select id="filter-ano"><option value="">Todos os anos</option></select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <button class="btn" onclick="buscar()">🔍 Buscar</button>
+          <button class="btn outline" onclick="limpar()">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-banner" id="error-banner">
+      ⚠️ Erro ao conectar à API.
+    </div>
+
+    <div id="results-info"></div>
+    <div id="results"></div>
+
+  </div>
+
+  <footer>Sistema de Consulta de Eletivas &nbsp;·&nbsp; Secretaria Escolar</footer>
+
+</div>
+
+<script>
+// ── Configuração ──────────────────────────────────────────────────────────────
+const API = 'http://localhost:8000';
+let currentTab = 'alunos';
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const btn      = document.getElementById('login-btn');
+  const errEl    = document.getElementById('login-error');
+
+  if (!username || !password) {
+    errEl.textContent = '⚠️ Preencha usuário e senha.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  errEl.classList.remove('show');
+
+  try {
+    const body = new URLSearchParams({ username, password });
+    const res  = await fetch(API + '/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || 'Credenciais inválidas');
+    }
+
+    const data = await res.json();
+    sessionStorage.setItem('token', data.access_token);
+    sessionStorage.setItem('user', username);
+    showApp(username);
+
+  } catch(e) {
+    errEl.textContent = '⚠️ ' + e.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+}
+
+function logout() {
+  sessionStorage.clear();
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').classList.remove('show');
+}
+
+function showApp(username) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('user-name').textContent = username;
+  document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
+  initApp();
+}
+
+// Verifica se já tem sessão ativa ao carregar
+window.addEventListener('load', () => {
+  const token = sessionStorage.getItem('token');
+  const user  = sessionStorage.getItem('user');
+  if (token && user) {
+    showApp(user);
+  }
+});
+
+// ── API com token ─────────────────────────────────────────────────────────────
+async function apiFetch(path) {
+  const token = sessionStorage.getItem('token');
+  const res   = await fetch(API + path, {
+    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+  });
+
+  if (res.status === 401) {
+    logout();
+    throw new Error('Sessão expirada. Faça login novamente.');
+  }
+  if (!res.ok) throw new Error(res.statusText);
+  return res.json();
+}
+
+function showError(show) {
+  document.getElementById('error-banner').classList.toggle('show', show);
+}
+
+// ── Init app ──────────────────────────────────────────────────────────────────
+async function initApp() {
+  try {
+    const [alunosData, eletData, regsData, areasData, anosData] = await Promise.all([
+      apiFetch('/alunos'), apiFetch('/eletivas'), apiFetch('/buscar'),
+      apiFetch('/areas'), apiFetch('/anos')
+    ]);
+
+    document.getElementById('stat-alunos').textContent = alunosData.length;
+    document.getElementById('stat-eletivas').textContent = new Set(eletData.map(e => e.nome)).size;
+    document.getElementById('stat-registros').textContent = regsData.length;
+
+    const areaEl = document.getElementById('filter-area');
+    areaEl.innerHTML = '<option value="">Todas as áreas</option>';
+    areasData.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a; opt.textContent = a; areaEl.appendChild(opt);
+    });
+
+    const anoEl = document.getElementById('filter-ano');
+    anoEl.innerHTML = '<option value="">Todos os anos</option>';
+    anosData.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a; opt.textContent = a; anoEl.appendChild(opt);
+    });
+
+    showError(false);
+    buscar();
+  } catch(e) {
+    if (e.message !== 'Sessão expirada. Faça login novamente.') showError(true);
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function badgeClass(area) {
+  if (!area) return 'def';
+  const a = area.toLowerCase();
+  if (a.includes('matem')) return 'mat';
+  if (a.includes('linguag')) return 'ling';
+  if (a.includes('natureza')) return 'nat';
+  if (a.includes('humanas')) return 'hum';
+  return 'def';
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['alunos','eletivas','busca'][i] === tab);
+  });
+  const labels = { alunos: 'Nome do aluno', eletivas: 'Nome da eletiva', busca: 'Nome do aluno ou eletiva' };
+  document.getElementById('search-label').textContent = labels[tab];
+  buscar();
+}
+
+async function buscar() {
+  const q    = document.getElementById('search-input').value.trim();
+  const area = document.getElementById('filter-area').value;
+  const ano  = document.getElementById('filter-ano').value;
+  const res  = document.getElementById('results');
+  const info = document.getElementById('results-info');
+
+  res.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  info.textContent = '';
+
+  try {
+    if (currentTab === 'alunos') {
+      const data = await apiFetch('/alunos?' + new URLSearchParams(q ? {busca: q} : {}));
+      info.textContent = `${data.length} aluno(s) encontrado(s)`;
+      res.innerHTML = data.length ? tabelaAlunos(data) : emptyHTML('Nenhum aluno encontrado.');
+
+    } else if (currentTab === 'eletivas') {
+      const params = {};
+      if (q) params.busca = q;
+      if (area) params.area = area;
+      if (ano) params.ano = ano;
+      const data = await apiFetch('/eletivas?' + new URLSearchParams(params));
+      info.textContent = `${data.length} registro(s) encontrado(s)`;
+      res.innerHTML = data.length ? tabelaEletivas(data) : emptyHTML('Nenhuma eletiva encontrada.');
+
+    } else {
+      const params = {};
+      if (q) params.q = q;
+      if (area) params.area = area;
+      if (ano) params.ano = ano;
+      const data = await apiFetch('/buscar?' + new URLSearchParams(params));
+      info.textContent = `${data.length} registro(s) encontrado(s)`;
+      res.innerHTML = data.length ? tabelaBusca(data) : emptyHTML('Nenhum resultado encontrado.');
+    }
+    showError(false);
+  } catch(e) {
+    if (e.message !== 'Sessão expirada. Faça login novamente.') showError(true);
+    res.innerHTML = '';
+  }
+}
+
+function limpar() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-area').value = '';
+  document.getElementById('filter-ano').value = '';
+  buscar();
+}
+
+// ── Tabelas ───────────────────────────────────────────────────────────────────
+function tabelaAlunos(data) {
+  const rows = data.map(a => `
+    <tr class="expandable-row" onclick="toggleAluno(${a.id}, this)">
+      <td style="width:28px"><span class="chevron">▶</span></td>
+      <td class="nome">${a.nome}</td>
+    </tr>
+    <tr class="expand-row" id="exp-a-${a.id}">
+      <td colspan="2">
+        <div class="expand-inner" id="inner-a-${a.id}">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </td>
+    </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:28px"></th><th>Nome do Aluno</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+async function toggleAluno(id, row) {
+  const exp   = document.getElementById(`exp-a-${id}`);
+  const inner = document.getElementById(`inner-a-${id}`);
+  const isOpen = exp.classList.contains('open');
+  document.querySelectorAll('.expandable-row.open').forEach(r => r.classList.remove('open'));
+  document.querySelectorAll('.expand-row.open').forEach(r => r.classList.remove('open'));
+  if (isOpen) return;
+  row.classList.add('open');
+  exp.classList.add('open');
+  try {
+    const data = await apiFetch(`/alunos/${id}/eletivas`);
+    if (!data.length) { inner.innerHTML = '<p style="color:var(--muted);padding:8px;font-size:.85rem">Nenhuma eletiva registrada.</p>'; return; }
+    inner.innerHTML = `<table>
+      <thead><tr><th>Eletiva</th><th class="col-area">Área</th><th class="col-prof">Professor</th><th>Ano</th><th>Nota</th></tr></thead>
+      <tbody>${data.map(r => `<tr>
+        <td>${r.eletiva}</td>
+        <td class="col-area"><span class="badge ${badgeClass(r.area)}">${r.area}</span></td>
+        <td class="col-prof" style="color:var(--muted)">${r.professor}</td>
+        <td>${r.ano_letivo || '—'}</td>
+        <td class="nota">${r.media_final || '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { inner.innerHTML = '<p style="color:var(--danger);padding:8px;font-size:.85rem">Erro ao carregar.</p>'; }
+}
+
+function tabelaEletivas(data) {
+  const rows = data.map(e => `
+    <tr class="expandable-row" onclick="toggleEletiva(${e.id}, ${e.ano_letivo}, this)">
+      <td style="width:28px"><span class="chevron">▶</span></td>
+      <td class="nome">${e.nome}</td>
+      <td class="col-area"><span class="badge ${badgeClass(e.area)}">${e.area}</span></td>
+      <td class="col-prof">${e.professor}</td>
+      <td>${e.ano_letivo || '—'}</td>
+      <td>${e.total_alunos} aluno(s)</td>
+    </tr>
+    <tr class="expand-row" id="exp-e-${e.id}-${e.ano_letivo}">
+      <td colspan="6">
+        <div class="expand-inner" id="inner-e-${e.id}-${e.ano_letivo}">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </td>
+    </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:28px"></th><th>Eletiva</th><th class="col-area">Área</th><th class="col-prof">Professor</th><th>Ano</th><th>Alunos</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+async function toggleEletiva(id, ano, row) {
+  const key   = `${id}-${ano}`;
+  const exp   = document.getElementById(`exp-e-${key}`);
+  const inner = document.getElementById(`inner-e-${key}`);
+  const isOpen = exp.classList.contains('open');
+  document.querySelectorAll('.expandable-row.open').forEach(r => r.classList.remove('open'));
+  document.querySelectorAll('.expand-row.open').forEach(r => r.classList.remove('open'));
+  if (isOpen) return;
+  row.classList.add('open');
+  exp.classList.add('open');
+  try {
+    const params = ano ? `?ano=${ano}` : '';
+    const data = await apiFetch(`/eletivas/${id}/alunos${params}`);
+    if (!data.length) { inner.innerHTML = '<p style="color:var(--muted);padding:8px;font-size:.85rem">Nenhum aluno encontrado.</p>'; return; }
+    inner.innerHTML = `<table>
+      <thead><tr><th>Aluno</th><th>Ano</th><th>Nota</th></tr></thead>
+      <tbody>${data.map(r => `<tr>
+        <td class="nome">${r.aluno}</td>
+        <td>${r.ano_letivo || '—'}</td>
+        <td class="nota">${r.media_final || '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { inner.innerHTML = '<p style="color:var(--danger);padding:8px;font-size:.85rem">Erro ao carregar.</p>'; }
+}
+
+function tabelaBusca(data) {
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Aluno</th><th>Eletiva</th><th class="col-area">Área</th><th class="col-prof">Professor</th><th>Ano</th><th>Nota</th></tr></thead>
+    <tbody>${data.map(r => `<tr>
+      <td class="nome">${r.aluno}</td>
+      <td>${r.eletiva}</td>
+      <td class="col-area"><span class="badge ${badgeClass(r.area)}">${r.area}</span></td>
+      <td class="col-prof" style="color:var(--muted)">${r.professor}</td>
+      <td>${r.ano_letivo || '—'}</td>
+      <td class="nota">${r.media_final || '—'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function emptyHTML(msg) {
+  return `<div class="empty"><div class="icon">🔍</div><p>${msg}</p></div>`;
+}
+</script>
+</body>
+</html>
