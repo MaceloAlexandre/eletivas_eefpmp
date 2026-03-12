@@ -77,7 +77,7 @@ DB = {
     "port":     int(os.getenv("DB_PORT", "5432")),
     "dbname":   os.getenv("DB_NAME",     "eletivas"),
     "user":     os.getenv("DB_USER",     "postgres"),
-    "password": os.getenv("DB_PASSWORD", ""),
+    "password": os.getenv("DB_PASSWORD", "Macelo321"),
 }
 
 def get_conn():
@@ -102,6 +102,37 @@ def listar_alunos(busca: Optional[str] = None, user: str = Depends(get_current_u
         cur.execute("SELECT * FROM alunos ORDER BY nome")
     r = cur.fetchall(); conn.close(); return r
 
+@app.get("/alunos/buscar-nome")
+def buscar_aluno_por_nome(
+    nome: str,
+    ano_letivo: Optional[int] = None,
+    user: str = Depends(get_current_user)
+):
+    conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT id, nome FROM alunos WHERE nome ILIKE %s ORDER BY nome LIMIT 10", (f"%{nome}%",))
+    alunos = cur.fetchall()
+    result = []
+    for a in alunos:
+        turma = None
+        if ano_letivo:
+            cur.execute("""
+                SELECT t.id, t.nome, t.serie, t.ano_letivo
+                FROM aluno_turma at2
+                JOIN turmas t ON t.id = at2.turma_id
+                WHERE at2.aluno_id = %s AND t.ano_letivo = %s
+                LIMIT 1
+            """, (a["id"], ano_letivo))
+            turma = cur.fetchone()
+        result.append({"id": a["id"], "nome": a["nome"], "turma": dict(turma) if turma else None})
+    conn.close()
+    return result
+
+@app.get("/eletivas/buscar-nome")
+def buscar_eletiva_por_nome(nome: str, user: str = Depends(get_current_user)):
+    conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT id, nome, area, professor, semestre FROM eletivas WHERE nome ILIKE %s ORDER BY nome LIMIT 10", (f"%{nome}%",))
+    r = cur.fetchall(); conn.close(); return r
+
 @app.get("/alunos/{aluno_id}/eletivas")
 def eletivas_do_aluno(aluno_id: int, user: str = Depends(get_current_user)):
     conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -118,7 +149,6 @@ def eletivas_do_aluno(aluno_id: int, user: str = Depends(get_current_user)):
 
 @app.patch("/alunos/{aluno_id}/serie")
 def atualizar_serie_aluno(aluno_id: int, body: AlunoSerieUpdate, user: str = Depends(get_current_user)):
-    """Atualiza a série em TODOS os registros do aluno."""
     if body.serie and body.serie not in SERIES_VALIDAS:
         raise HTTPException(400, f"Série inválida. Opções: {SERIES_VALIDAS}")
     conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -136,7 +166,6 @@ def atualizar_registro(
     body: RegistroUpdate = None,
     user: str = Depends(get_current_user),
 ):
-    """Atualiza serie e/ou semestre dos registros de um aluno em um ano."""
     if body is None: body = RegistroUpdate()
     if body.serie    and body.serie    not in SERIES_VALIDAS:    raise HTTPException(400, "Série inválida")
     if body.semestre and body.semestre not in SEMESTRES_VALIDOS: raise HTTPException(400, "Semestre inválido")
@@ -181,6 +210,12 @@ def listar_eletivas(
     """, (busca, f"%{busca}%" if busca else None,
           area,  f"%{area}%"  if area  else None,
           ano,   ano, semestre, semestre))
+    r = cur.fetchall(); conn.close(); return r
+
+@app.get("/eletivas/todas")
+def listar_todas_eletivas(user: str = Depends(get_current_user)):
+    conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT id, nome, area, professor, ano_letivo, semestre FROM eletivas ORDER BY area, nome")
     r = cur.fetchall(); conn.close(); return r
 
 @app.get("/eletivas/{eletiva_id}/alunos")
@@ -250,7 +285,6 @@ def listar_anos(user: str = Depends(get_current_user)):
     r = cur.fetchall(); conn.close(); return [x["ano_letivo"] for x in r]
 
 # ── Turmas ─────────────────────────────────────────────────────────────────────
-
 class TurmaCreate(BaseModel):
     nome:       str
     serie:      str
@@ -379,23 +413,16 @@ def remover_aluno_turma(turma_id: int, aluno_id: int, user: str = Depends(get_cu
     return {"ok": True}
 
 # ── Novo Registro ──────────────────────────────────────────────────────────────
-
 class NovoRegistro(BaseModel):
-    # Aluno
-    aluno_id:    Optional[int] = None
-    aluno_nome:  Optional[str] = None   # se novo
-    aluno_serie: Optional[str] = None   # se novo (para vincular à turma)
-
-    # Eletiva
-    eletiva_id:       Optional[int] = None
-    eletiva_nome:     Optional[str] = None  # se nova
-    eletiva_professor:Optional[str] = None  # se nova
-    eletiva_area:     Optional[str] = None  # se nova
-
-    # Registro
-    ano_letivo: int
-    semestre:   int
-    media_final: Optional[float] = None
+    aluno_id:          Optional[int] = None
+    aluno_nome:        Optional[str] = None
+    aluno_serie:       Optional[str] = None
+    eletiva_id:        Optional[int] = None
+    eletiva_nome:      Optional[str] = None
+    eletiva_professor: Optional[str] = None
+    eletiva_area:      Optional[str] = None
+    ano_letivo:        int
+    media_final:       Optional[float] = None
 
 import unicodedata, re
 
@@ -410,9 +437,6 @@ AREAS_VALIDAS = ["Matematica", "Linguagens", "Ciencias da Natureza", "Ciencias H
 
 @app.post("/registros")
 def criar_registro(body: NovoRegistro, user: str = Depends(get_current_user)):
-    if body.semestre not in SEMESTRES_VALIDOS:
-        raise HTTPException(400, "Semestre inválido.")
-
     conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     try:
@@ -433,7 +457,7 @@ def criar_registro(body: NovoRegistro, user: str = Depends(get_current_user)):
 
         aluno_id = aluno["id"]
 
-        # ── 2. Série: busca turma do aluno no ano ou usa a fornecida ───────────
+        # ── 2. Série: busca turma do aluno no ano ──────────────────────────────
         serie = None
         cur.execute("""
             SELECT t.serie FROM aluno_turma at2
@@ -446,7 +470,6 @@ def criar_registro(body: NovoRegistro, user: str = Depends(get_current_user)):
         if turma_row:
             serie = turma_row["serie"]
         elif body.aluno_serie:
-            # Aluno novo sem turma: vincula à turma da série/ano se existir
             serie = body.aluno_serie
             cur.execute("""
                 SELECT id FROM turmas
@@ -459,41 +482,51 @@ def criar_registro(body: NovoRegistro, user: str = Depends(get_current_user)):
                     cur.execute("INSERT INTO aluno_turma (aluno_id, turma_id) VALUES (%s, %s)",
                         (aluno_id, turma_para_vincular["id"]))
                 except Exception:
-                    pass  # já está na turma
+                    pass
 
-        # ── 3. Resolve eletiva ─────────────────────────────────────────────────
+        # ── 3. Resolve eletiva e obtém semestre dela ───────────────────────────
+        eletiva_semestre = None
+
         if body.eletiva_id:
-            cur.execute("SELECT id FROM eletivas WHERE id = %s", (body.eletiva_id,))
+            cur.execute("SELECT id, semestre FROM eletivas WHERE id = %s", (body.eletiva_id,))
             el = cur.fetchone()
             if not el: raise HTTPException(404, "Eletiva não encontrada.")
             eletiva_id = body.eletiva_id
+            eletiva_semestre = el["semestre"]
         elif body.eletiva_nome:
             if not body.eletiva_professor or not body.eletiva_area:
                 raise HTTPException(400, "Para nova eletiva informe também professor e área.")
             if body.eletiva_area not in AREAS_VALIDAS:
                 raise HTTPException(400, f"Área inválida. Opções: {AREAS_VALIDAS}")
-            cur.execute("SELECT id FROM eletivas WHERE nome = %s AND area = %s",
-                (body.eletiva_nome.strip(), body.eletiva_area))
+            cur.execute("""
+                SELECT id, semestre FROM eletivas
+                WHERE nome = %s AND area = %s
+                  AND ano_letivo IS NOT DISTINCT FROM %s
+                  AND semestre IS NOT DISTINCT FROM %s
+            """, (body.eletiva_nome.strip(), body.eletiva_area, None, None))
             el = cur.fetchone()
             if el:
                 eletiva_id = el["id"]
+                eletiva_semestre = el["semestre"]
             else:
                 cur.execute(
-                    "INSERT INTO eletivas (nome, area, professor) VALUES (%s, %s, %s) RETURNING id",
+                    "INSERT INTO eletivas (nome, area, professor) VALUES (%s, %s, %s) RETURNING id, semestre",
                     (body.eletiva_nome.strip(), body.eletiva_area, body.eletiva_professor.strip())
                 )
-                eletiva_id = cur.fetchone()["id"]
+                row = cur.fetchone()
+                eletiva_id = row["id"]
+                eletiva_semestre = row["semestre"]
         else:
             raise HTTPException(400, "Informe eletiva_id ou eletiva_nome.")
 
-        # ── 4. Cria registro ───────────────────────────────────────────────────
+        # ── 4. Cria registro usando semestre da eletiva ────────────────────────
         cur.execute("""
             INSERT INTO registros (aluno_id, eletiva_id, ano_letivo, semestre, media_final, serie)
             VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (aluno_id, eletiva_id, ano_letivo, semestre)
             DO UPDATE SET media_final = EXCLUDED.media_final, serie = EXCLUDED.serie
             RETURNING *
-        """, (aluno_id, eletiva_id, body.ano_letivo, body.semestre, body.media_final, serie))
+        """, (aluno_id, eletiva_id, body.ano_letivo, eletiva_semestre, body.media_final, serie))
         registro = cur.fetchone()
 
         # ── 5. Garante série nos outros registros do aluno neste ano ───────────
@@ -517,50 +550,39 @@ def criar_registro(body: NovoRegistro, user: str = Depends(get_current_user)):
         conn.rollback(); conn.close()
         raise HTTPException(500, str(e))
 
-@app.get("/alunos/buscar-nome")
-def buscar_aluno_por_nome(
-    nome: str,
-    ano_letivo: Optional[int] = None,
-    user: str = Depends(get_current_user)
-):
-    """Busca aluno por nome e retorna sua turma no ano informado (se houver)."""
-    conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT id, nome FROM alunos WHERE nome ILIKE %s ORDER BY nome LIMIT 10", (f"%{nome}%",))
-    alunos = cur.fetchall()
-    result = []
-    for a in alunos:
-        turma = None
-        if ano_letivo:
-            cur.execute("""
-                SELECT t.id, t.nome, t.serie, t.ano_letivo
-                FROM aluno_turma at2
-                JOIN turmas t ON t.id = at2.turma_id
-                WHERE at2.aluno_id = %s AND t.ano_letivo = %s
-                LIMIT 1
-            """, (a["id"], ano_letivo))
-            turma = cur.fetchone()
-        result.append({"id": a["id"], "nome": a["nome"], "turma": dict(turma) if turma else None})
-    conn.close()
-    return result
-
-@app.get("/eletivas/buscar-nome")
-def buscar_eletiva_por_nome(nome: str, user: str = Depends(get_current_user)):
-    """Busca eletiva por nome para autocomplete."""
-    conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT id, nome, area, professor FROM eletivas WHERE nome ILIKE %s ORDER BY nome LIMIT 10", (f"%{nome}%",))
-    r = cur.fetchall(); conn.close(); return r
+# ── Eletivas CRUD ──────────────────────────────────────────────────────────────
+class EletivaCreate(BaseModel):
+    nome:       str
+    area:       str
+    professor:  str
+    ano_letivo: Optional[int] = None
+    semestre:   Optional[int] = None
 
 class EletivaUpdate(BaseModel):
-    nome:      Optional[str] = None
-    area:      Optional[str] = None
-    professor: Optional[str] = None
+    nome:       Optional[str] = None
+    area:       Optional[str] = None
+    professor:  Optional[str] = None
+    ano_letivo: Optional[int] = None
+    semestre:   Optional[int] = None
 
-@app.get("/eletivas/todas")
-def listar_todas_eletivas(user: str = Depends(get_current_user)):
-    """Lista todas as eletivas únicas (sem duplicar por ano/semestre)."""
+@app.post("/eletivas")
+def criar_eletiva(body: EletivaCreate, user: str = Depends(get_current_user)):
+    if body.area not in AREAS_VALIDAS:
+        raise HTTPException(400, f"Área inválida. Opções: {AREAS_VALIDAS}")
+    if body.semestre and body.semestre not in SEMESTRES_VALIDOS:
+        raise HTTPException(400, "Semestre inválido.")
     conn = get_conn(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT id, nome, area, professor FROM eletivas ORDER BY area, nome")
-    r = cur.fetchall(); conn.close(); return r
+    try:
+        cur.execute(
+            "INSERT INTO eletivas (nome, area, professor, ano_letivo, semestre) VALUES (%s, %s, %s, %s, %s) RETURNING *",
+            (body.nome.strip(), body.area, body.professor.strip(), body.ano_letivo, body.semestre)
+        )
+        r = cur.fetchone(); conn.commit(); conn.close(); return r
+    except Exception as e:
+        conn.rollback(); conn.close()
+        if "unique" in str(e).lower():
+            raise HTTPException(400, "Já existe uma eletiva com esse nome, área, ano e semestre.")
+        raise HTTPException(400, str(e))
 
 @app.patch("/eletivas/{eletiva_id}")
 def editar_eletiva(eletiva_id: int, body: EletivaUpdate, user: str = Depends(get_current_user)):
@@ -573,6 +595,11 @@ def editar_eletiva(eletiva_id: int, body: EletivaUpdate, user: str = Depends(get
         sets.append("area = %s");      params.append(body.area)
     if body.professor is not None:
         sets.append("professor = %s"); params.append(body.professor.strip())
+    if body.ano_letivo is not None:
+        sets.append("ano_letivo = %s"); params.append(body.ano_letivo)
+    if body.semestre is not None:
+        if body.semestre not in SEMESTRES_VALIDOS: raise HTTPException(400, "Semestre inválido.")
+        sets.append("semestre = %s"); params.append(body.semestre)
     if not sets: conn.close(); return {"ok": True}
     params.append(eletiva_id)
     cur.execute(f"UPDATE eletivas SET {', '.join(sets)} WHERE id = %s RETURNING *", params)

@@ -261,7 +261,7 @@
       <button class="tab" onclick="setTab('gerir-eletivas')">✏️ Eletivas</button>
     </div>
 
-    <!-- ── SEÇÃO: CONSULTA ── -->
+    <!-- ── SEÇÃO: POR ALUNO ── -->
     <div id="sec-alunos" class="section active">
       <div class="search-panel">
         <div class="search-row">
@@ -306,7 +306,7 @@
     <!-- ── SEÇÃO: GERENCIAR ELETIVAS ── -->
     <div id="sec-gerir-eletivas" class="section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-        <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <div>
             <span class="field-label">Filtrar por área</span>
             <select id="ge-filter-area" onchange="filtrarEletivasGerenciar()" style="min-width:160px">
@@ -318,6 +318,7 @@
             <input type="text" id="ge-busca" placeholder="Nome ou professor..." oninput="filtrarEletivasGerenciar()" style="min-width:200px"/>
           </div>
         </div>
+        <button class="btn" onclick="abrirNovaEletiva()">+ Nova Eletiva</button>
       </div>
       <div id="ge-info" style="font-size:.82rem;color:var(--muted);margin-bottom:10px"></div>
       <div id="ge-lista"></div>
@@ -378,7 +379,6 @@
     <div style="background:var(--green-light);border:1px solid var(--green-mid);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px">
       <div class="field-label" style="margin-bottom:10px;color:var(--green-dark)">1. Aluno</div>
 
-      <!-- Busca -->
       <div class="modal-field">
         <label>Buscar aluno existente</label>
         <div style="display:flex;gap:8px">
@@ -388,7 +388,6 @@
         <div class="aluno-resultado" id="nr-aluno-resultado"></div>
       </div>
 
-      <!-- Aluno selecionado -->
       <div id="nr-aluno-selecionado" style="display:none;margin-bottom:10px">
         <div style="background:#fff;border:1px solid var(--green-mid);border-radius:var(--radius);padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
           <strong id="nr-aluno-nome-display">—</strong>
@@ -396,31 +395,23 @@
         </div>
       </div>
 
-      <!-- Aluno novo -->
       <div id="nr-aluno-novo" style="display:none;margin-bottom:10px">
         <div style="background:#fffde7;border:1px solid #ffe082;border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;font-size:.82rem;color:var(--warn)">
           ⚠️ Novo aluno — será criado ao salvar.
         </div>
-        <div class="modal-field">
+        <div style="flex:1;min-width:180px">
           <label class="field-label">Nome completo</label>
           <input type="text" id="nr-aluno-nome-novo" placeholder="Nome do aluno"/>
         </div>
       </div>
 
-      <!-- Turma — aparece sempre após aluno ser definido -->
-      <div id="nr-turma-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--green-mid)">
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--green-mid)">
         <label class="field-label">Turma no ano letivo</label>
-        <div id="nr-turma-atual" style="display:none;margin-bottom:8px">
-          <div style="background:#fff;border:1px solid var(--green-mid);border-radius:var(--radius);padding:7px 12px;display:flex;justify-content:space-between;align-items:center">
-            <span id="nr-turma-atual-label" style="font-size:.88rem;color:var(--green-dark);font-weight:600"></span>
-            <button class="btn warn sm" onclick="trocarTurmaNR()">Trocar turma</button>
-          </div>
-        </div>
-        <div id="nr-turma-select-wrap">
-          <select id="nr-turma-select" style="margin-bottom:0">
-            <option value="">— Sem turma —</option>
-          </select>
-          <p style="font-size:.75rem;color:var(--muted);margin-top:4px">Ao salvar, o aluno será adicionado à turma selecionada e a série será atualizada nos registros.</p>
+        <select id="nr-turma-select" style="margin-bottom:4px" onchange="onTurmaNRChange()">
+          <option value="">— Sem turma —</option>
+        </select>
+        <div id="nr-turma-serie-info" style="font-size:.75rem;color:var(--green-dark);display:none">
+          ✓ Série <strong id="nr-turma-serie-label"></strong> será aplicada nos registros do aluno neste ano.
         </div>
       </div>
 
@@ -484,18 +475,12 @@
           <label class="field-label">Ano Letivo</label>
           <input type="number" id="nr-ano" placeholder="2025" min="2020" max="2035" oninput="onAnoNRChange()"/>
         </div>
-        <div style="min-width:130px">
-          <label class="field-label">Semestre</label>
-          <select id="nr-semestre">
-            <option value="1">1º Semestre</option>
-            <option value="2">2º Semestre</option>
-          </select>
-        </div>
         <div style="min-width:100px">
           <label class="field-label">Nota Final</label>
-          <input type="number" id="nr-nota" placeholder="Ex: 8.5" min="0" max="10" step="0.1"/>
+            <input type="text" id="nr-nota" placeholder="Ex: 8.5"/>
         </div>
       </div>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:8px">ℹ️ O semestre é definido automaticamente pela eletiva selecionada.</p>
     </div>
 
     <div id="nr-erro" style="display:none;background:#ffebee;border:1px solid #ef9a9a;border-left:4px solid var(--danger);border-radius:var(--radius);color:var(--danger);font-size:.82rem;padding:9px 12px;margin-bottom:12px"></div>
@@ -507,11 +492,11 @@
   </div>
 </div>
 
-<!-- MODAL EDITAR ELETIVA -->
+<!-- MODAL NOVA/EDITAR ELETIVA -->
 <div class="modal-backdrop" id="modal-eletiva">
   <div class="modal" style="max-width:460px">
     <button class="modal-close" onclick="fecharModal('modal-eletiva')">✕</button>
-    <h2>Editar Eletiva</h2>
+    <h2 id="modal-eletiva-titulo">Nova Eletiva</h2>
     <input type="hidden" id="me-id"/>
     <div class="modal-field">
       <label>Nome da Eletiva</label>
@@ -525,6 +510,18 @@
       <label>Professor</label>
       <input type="text" id="me-professor" placeholder="Nome do professor"/>
     </div>
+    <div class="modal-field">
+      <label>Ano Letivo</label>
+      <input type="number" id="me-ano" placeholder="Ex: 2025" min="2020" max="2035"/>
+    </div>
+    <div class="modal-field">
+      <label>Semestre</label>
+      <select id="me-semestre">
+        <option value="">— Sem semestre —</option>
+        <option value="1">1º Semestre</option>
+        <option value="2">2º Semestre</option>
+      </select>
+    </div>
     <div class="modal-actions">
       <button class="btn outline" onclick="fecharModal('modal-eletiva')">Cancelar</button>
       <button class="btn" onclick="salvarEletiva()">Salvar</button>
@@ -534,7 +531,6 @@
 
 <!-- ÁREA DE IMPRESSÃO -->
 <div id="print-area" style="display:none"></div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -675,10 +671,7 @@ async function buscar() {
   const ano      = document.getElementById('filter-ano').value;
   const semestre = document.getElementById('filter-semestre').value;
   const serie    = document.getElementById('filter-serie').value;
-  const res      = document.getElementById('results');
-  const info     = document.getElementById('results-info');
 
-  // Move results to correct section
   const secId = currentTab==='eletivas'?'sec-eletivas': currentTab==='busca'?'sec-busca':'sec-alunos';
   const sec = document.getElementById(secId);
 
@@ -878,7 +871,6 @@ function renderTurmas(data) {
 async function toggleTurma(id, header) {
   const body = document.getElementById(`turma-body-${id}`);
   const isOpen = body.classList.contains('open');
-  // fechar todos
   document.querySelectorAll('.turma-header.open').forEach(h=>{ h.classList.remove('open'); h.querySelector('.chevron').style.transform=''; });
   document.querySelectorAll('.turma-body.open').forEach(b=>b.classList.remove('open'));
   if (isOpen) return;
@@ -901,9 +893,7 @@ async function carregarCorpoTurma(id, body) {
         </div>
         <div class="aluno-resultado" id="resultado-aluno-${id}"></div>
       </div>
-      <div id="lista-alunos-${id}">
-        ${renderListaAlunos(alunos, id)}
-      </div>`;
+      <div id="lista-alunos-${id}">${renderListaAlunos(alunos, id)}</div>`;
   } catch(e) { body.innerHTML='<p style="color:var(--danger);padding:8px;font-size:.85rem">Erro ao carregar.</p>'; }
 }
 
@@ -1016,20 +1006,17 @@ async function excluirTurma(id, nome) {
 async function exportarTurmaPDF(turmaId) {
   try {
     const {turma, registros} = await apiFetch(`/turmas/${turmaId}/eletivas`);
-
-    // Agrupa por aluno
     const alunosMap = {};
     registros.forEach(r => {
       if (!alunosMap[r.aluno_id]) alunosMap[r.aluno_id] = {nome: r.aluno, eletivas: []};
       if (r.eletiva) alunosMap[r.aluno_id].eletivas.push(r);
     });
     const alunosList = Object.values(alunosMap).sort((a,b)=>a.nome.localeCompare(b.nome));
-
     const printEl = document.getElementById('print-area');
     printEl.style.display='block';
     printEl.innerHTML=`
       <style>
-        #print-area { font-family: 'Source Sans 3', Arial, sans-serif; font-size:13px; color:#1a2e1a; }
+        #print-area { font-family:'Source Sans 3',Arial,sans-serif; font-size:13px; color:#1a2e1a; }
         #print-area h1 { color:#2e7d32; font-size:1.4rem; margin-bottom:4px; }
         #print-area .sub { color:#607060; font-size:.85rem; margin-bottom:20px; }
         #print-area .aluno-bloco { margin-bottom:18px; page-break-inside:avoid; }
@@ -1051,7 +1038,6 @@ async function exportarTurmaPDF(turmaId) {
           </table>` : '<p style="color:#aaa;font-size:.82rem">Sem eletivas registradas neste ano.</p>'}
         </div>`).join('')}
       <div class="footer-print">Gerado em ${new Date().toLocaleDateString('pt-BR')} — Sistema de Eletivas</div>`;
-
     setTimeout(()=>{ window.print(); printEl.style.display='none'; }, 200);
   } catch(e) { toast('Erro ao gerar PDF: '+e.message, false); }
 }
@@ -1062,31 +1048,28 @@ async function exportarTurmaPDF(turmaId) {
 let AREAS_FIXAS = [];
 
 async function abrirModalNovoRegistro() {
-  // Reseta tudo
   limparAlunoNR(); limparEletivaNR();
   document.getElementById('nr-ano').value = new Date().getFullYear();
-  document.getElementById('nr-semestre').value = '1';
   document.getElementById('nr-nota').value = '';
   document.getElementById('nr-erro').style.display = 'none';
   document.getElementById('nr-aluno-novo').style.display = 'none';
   document.getElementById('nr-eletiva-nova').style.display = 'none';
-  document.getElementById('nr-turma-wrap').style.display = 'none';
   document.getElementById('nr-turma-id-atual').value = '';
+  document.getElementById('nr-turma-serie-info').style.display = 'none';
   todasTurmas = [];
+  _turmasCacheAno = null;
 
-  // Popula séries no select de novo aluno
-  const serieEl = document.getElementById('nr-aluno-serie-novo');
-  serieEl.innerHTML = '<option value="">— Sem série —</option>';
-  SERIES.forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; serieEl.appendChild(o); });
-
-  // Popula áreas
   if (!AREAS_FIXAS.length) {
     try { AREAS_FIXAS = await apiFetch('/areas/lista'); } catch(e) { AREAS_FIXAS=[]; }
   }
-  const areaEl = document.getElementById('nr-eletiva-area-nova');
-  areaEl.innerHTML = '<option value="">Selecione</option>';
-  AREAS_FIXAS.forEach(a => { const o=document.createElement('option'); o.value=a; o.textContent=a; areaEl.appendChild(o); });
+  ['nr-eletiva-area-nova', 'me-area'].forEach(selId => {
+    const el = document.getElementById(selId);
+    if (!el) return;
+    el.innerHTML = '<option value="">Selecione</option>';
+    AREAS_FIXAS.forEach(a => { const o=document.createElement('option'); o.value=a; o.textContent=a; el.appendChild(o); });
+  });
 
+  await popularTurmasNR(null);
   document.getElementById('modal-registro').classList.add('open');
 }
 
@@ -1105,15 +1088,18 @@ async function buscarAlunoNR() {
       const data = await apiFetch('/alunos/buscar-nome?nome='+encodeURIComponent(q)+(ano?'&ano_letivo='+ano:''));
       if (!data.length) {
         res.innerHTML = '<div class="aluno-item text-muted">Nenhum aluno encontrado</div>';
-      } else {
-        res.innerHTML = data.map(a => {
-          const turmaInfo = a.turma ? `<span style="font-size:.75rem;color:var(--green)">(${a.turma.nome} · ${a.turma.serie})</span>` : '';
-          return `<div class="aluno-item" onclick="selecionarAlunoNR(${a.id},'${a.nome.replace(/'/g,"\'")}',${JSON.stringify(a.turma)})">
-            <span>${a.nome} ${turmaInfo}</span>
-            <span class="btn outline sm">Selecionar</span>
-          </div>`;
-        }).join('');
+        res.classList.add('show');
+        return;
       }
+      res.innerHTML = '';
+      data.forEach(a => {
+        const turmaInfo = a.turma ? `<span style="font-size:.75rem;color:var(--green)">(${a.turma.nome} · ${a.turma.serie})</span>` : '';
+        const div = document.createElement('div');
+        div.className = 'aluno-item';
+        div.innerHTML = `<span>${a.nome} ${turmaInfo}</span><span class="btn outline sm">Selecionar</span>`;
+        div.addEventListener('click', () => selecionarAlunoNR(a.id, a.nome, a.turma));
+        res.appendChild(div);
+      });
       res.classList.add('show');
     } catch(e) {}
   }, 300);
@@ -1126,93 +1112,67 @@ async function selecionarAlunoNR(id, nome, turma) {
   document.getElementById('nr-aluno-busca').value = '';
   document.getElementById('nr-aluno-resultado').classList.remove('show');
   document.getElementById('nr-aluno-novo').style.display = 'none';
-  await mostrarCampoTurma(turma);
+  const turmaAtualId = turma ? turma.id : null;
+  document.getElementById('nr-turma-id-atual').value = turmaAtualId || '';
+  await popularTurmasNR(turmaAtualId);
 }
 
 function limparAlunoNR() {
   document.getElementById('nr-aluno-id').value = '';
-  document.getElementById('nr-aluno-turma-id-atual') && (document.getElementById('nr-turma-id-atual').value = '');
+  document.getElementById('nr-turma-id-atual').value = '';
   document.getElementById('nr-aluno-busca').value = '';
   document.getElementById('nr-aluno-resultado').classList.remove('show');
   document.getElementById('nr-aluno-selecionado').style.display = 'none';
   document.getElementById('nr-aluno-novo').style.display = 'none';
-  document.getElementById('nr-turma-wrap').style.display = 'none';
+  document.getElementById('nr-turma-serie-info').style.display = 'none';
 }
 
-function usarAlunoNovo() {
+async function usarAlunoNovo() {
   limparAlunoNR();
   document.getElementById('nr-aluno-novo').style.display = 'block';
   document.getElementById('nr-aluno-nome-novo').focus();
-  mostrarCampoTurma(null);
+  await popularTurmasNR(null);
 }
 
-async function mostrarCampoTurma(turmaAtual) {
-  const wrap       = document.getElementById('nr-turma-wrap');
-  const atualDiv   = document.getElementById('nr-turma-atual');
-  const atualLabel = document.getElementById('nr-turma-atual-label');
-  const selectWrap = document.getElementById('nr-turma-select-wrap');
-  const sel        = document.getElementById('nr-turma-select');
+let _turmasCacheAno = null;
 
-  wrap.style.display = 'block';
-
-  // Carrega turmas do ano selecionado se ainda não carregou
+async function popularTurmasNR(turmaAtualId) {
+  const sel = document.getElementById('nr-turma-select');
   const ano = parseInt(document.getElementById('nr-ano').value);
-  if (!todasTurmas.length || todasTurmas._ano !== ano) {
-    try {
-      todasTurmas = await apiFetch('/turmas'+(ano?`?ano=${ano}`:''));
-      todasTurmas._ano = ano;
-    } catch(e) { todasTurmas = []; }
+  if (_turmasCacheAno !== ano) {
+    try { todasTurmas = await apiFetch('/turmas' + (ano ? `?ano=${ano}` : '')); }
+    catch(e) { todasTurmas = []; }
+    _turmasCacheAno = ano;
   }
-
-  // Popula select
   sel.innerHTML = '<option value="">— Sem turma —</option>';
   todasTurmas.forEach(t => {
     const o = document.createElement('option');
     o.value = t.id;
-    o.textContent = `${t.nome} · ${t.serie} · ${t.ano_letivo}`;
-    if (turmaAtual && t.id === turmaAtual.id) o.selected = true;
+    o.textContent = `${t.nome} · ${t.serie}`;
+    if (turmaAtualId && t.id === parseInt(turmaAtualId)) o.selected = true;
     sel.appendChild(o);
   });
-
-  if (turmaAtual) {
-    // Mostra turma atual com opção de trocar
-    atualLabel.textContent = `${turmaAtual.nome} · ${turmaAtual.serie}`;
-    document.getElementById('nr-turma-id-atual').value = turmaAtual.id;
-    atualDiv.style.display = 'block';
-    selectWrap.style.display = 'none';
-    sel.value = turmaAtual.id;
-  } else {
-    atualDiv.style.display = 'none';
-    selectWrap.style.display = 'block';
-    document.getElementById('nr-turma-id-atual').value = '';
-  }
+  onTurmaNRChange();
 }
 
-function trocarTurmaNR() {
-  document.getElementById('nr-turma-atual').style.display = 'none';
-  document.getElementById('nr-turma-select-wrap').style.display = 'block';
+function onTurmaNRChange() {
+  const sel = document.getElementById('nr-turma-select');
+  const infoDiv = document.getElementById('nr-turma-serie-info');
+  const infoLabel = document.getElementById('nr-turma-serie-label');
+  if (!sel.value) { infoDiv.style.display = 'none'; return; }
+  const turma = todasTurmas.find(t => t.id === parseInt(sel.value));
+  if (turma && turma.serie) { infoLabel.textContent = turma.serie; infoDiv.style.display = 'block'; }
+  else { infoDiv.style.display = 'none'; }
 }
 
 async function onAnoNRChange() {
-  todasTurmas = []; // força recarregar turmas do novo ano
-  // Se já tem aluno selecionado, recarrega turma
-  const alunoId = document.getElementById('nr-aluno-id').value;
-  if (alunoId) {
-    const ano = document.getElementById('nr-ano').value;
-    try {
-      const data = await apiFetch(`/alunos/buscar-nome?nome=&ano_letivo=${ano}`);
-      // Apenas recarrega as turmas disponíveis no select
-      const turmaAtualId = document.getElementById('nr-turma-id-atual').value;
-      const turmaAtual = turmaAtualId ? {id: parseInt(turmaAtualId)} : null;
-      await mostrarCampoTurma(turmaAtual);
-    } catch(e) { await mostrarCampoTurma(null); }
-  } else if (document.getElementById('nr-aluno-novo').style.display !== 'none') {
-    await mostrarCampoTurma(null);
-  }
+  _turmasCacheAno = null;
+  await popularTurmasNR(null);
 }
 
 // ── Eletiva ────────────────────────────────────────────────────────────────────
 let nrEletivaTimer = null;
+
 async function buscarEletivaNR() {
   clearTimeout(nrEletivaTimer);
   const q = document.getElementById('nr-eletiva-busca').value.trim();
@@ -1224,21 +1184,26 @@ async function buscarEletivaNR() {
       if (!data.length) {
         res.innerHTML = '<div class="aluno-item text-muted">Nenhuma eletiva encontrada</div>';
       } else {
-        res.innerHTML = data.map(e =>
-          `<div class="aluno-item" onclick="selecionarEletivaNR(${e.id},'${e.nome.replace(/'/g,"\'")}','${e.area}','${e.professor}')">
-            <span>${e.nome} <span style="font-size:.75rem;color:var(--muted)">(${e.area} · ${e.professor})</span></span>
-            <span class="btn outline sm">Selecionar</span>
-          </div>`).join('');
+        res.innerHTML = '';
+        data.forEach(e => {
+          const div = document.createElement('div');
+          div.className = 'aluno-item';
+          const semInfo = e.semestre ? ` · ${e.semestre}º Sem.` : '';
+          div.innerHTML = `<span>${e.nome} <span style="font-size:.75rem;color:var(--muted)">(${e.area} · ${e.professor}${semInfo})</span></span><span class="btn outline sm">Selecionar</span>`;
+          div.addEventListener('click', () => selecionarEletivaNR(e.id, e.nome, e.area, e.professor, e.semestre));
+          res.appendChild(div);
+        });
       }
       res.classList.add('show');
     } catch(e) {}
   }, 300);
 }
 
-function selecionarEletivaNR(id, nome, area, professor) {
+function selecionarEletivaNR(id, nome, area, professor, semestre) {
   document.getElementById('nr-eletiva-id').value = id;
   document.getElementById('nr-eletiva-nome-display').textContent = nome;
-  document.getElementById('nr-eletiva-meta-display').textContent = `${area} · ${professor}`;
+  const semInfo = semestre ? ` · ${semestre}º Sem.` : '';
+  document.getElementById('nr-eletiva-meta-display').textContent = `${area} · ${professor}${semInfo}`;
   document.getElementById('nr-eletiva-selecionada').style.display = 'block';
   document.getElementById('nr-eletiva-busca').value = '';
   document.getElementById('nr-eletiva-resultado').classList.remove('show');
@@ -1265,34 +1230,31 @@ async function salvarNovoRegistro() {
   erroEl.style.display = 'none';
 
   const ano      = parseInt(document.getElementById('nr-ano').value);
-  const semestre = parseInt(document.getElementById('nr-semestre').value);
   const nota     = document.getElementById('nr-nota').value;
   const alunoId  = document.getElementById('nr-aluno-id').value;
   const eletivaId= document.getElementById('nr-eletiva-id').value;
 
-  if (!ano || !semestre) { mostrarErroNR('Preencha o ano letivo e semestre.'); return; }
+  if (!ano) { mostrarErroNR('Preencha o ano letivo.'); return; }
 
-  const body = { ano_letivo: ano, semestre, media_final: nota ? parseFloat(nota) : null };
+  const body = { ano_letivo: ano, media_final: nota ? (isNaN(parseFloat(nota.replace(',','.'))) ? null : parseFloat(nota.replace(',','.'))) : null
+ };
 
   // Aluno
   const novoAlunoDiv = document.getElementById('nr-aluno-novo');
-  const turmaSelecionadaId = document.getElementById('nr-turma-select').value;
-  const turmaAtualId       = document.getElementById('nr-turma-id-atual').value;
-  const turmaFinalId       = turmaSelecionadaId || turmaAtualId || null;
+  const turmaFinalId = document.getElementById('nr-turma-select').value || null;
 
-  if (alunoId) {
+  if (alunoId && alunoId !== '') {
     body.aluno_id = parseInt(alunoId);
-  } else if (novoAlunoDiv.style.display !== 'none') {
+  } else if (novoAlunoDiv && novoAlunoDiv.style.display !== 'none') {
     const nomeNovo = document.getElementById('nr-aluno-nome-novo').value.trim();
     if (!nomeNovo) { mostrarErroNR('Informe o nome do novo aluno.'); return; }
     body.aluno_nome = nomeNovo;
-    // série virá da turma selecionada (o backend resolve)
   } else {
     mostrarErroNR('Selecione ou crie um aluno.'); return;
   }
 
-  // Turma — passa para o backend vincular após criar o registro
-  if (turmaFinalId) body._turma_id = parseInt(turmaFinalId);
+  const turmaFinalIdInt = turmaFinalId ? parseInt(turmaFinalId) : null;
+  if (turmaFinalIdInt) body._turma_id = turmaFinalIdInt;
 
   // Eletiva
   const novaEletivaDiv = document.getElementById('nr-eletiva-nova');
@@ -1313,30 +1275,23 @@ async function salvarNovoRegistro() {
   const btn = document.getElementById('nr-salvar-btn');
   btn.disabled = true; btn.textContent = 'Salvando...';
   try {
-    // Extrai turma do body antes de enviar (não é campo da API)
     const turmaId = body._turma_id || null;
     delete body._turma_id;
 
     const result = await apiPost('/registros', body);
 
-    // Vincula à turma se selecionada e diferente da atual
     if (turmaId) {
       const turmaAtualId = document.getElementById('nr-turma-id-atual').value;
       const alunoFinalId = result.registro.aluno_id;
       if (!turmaAtualId || parseInt(turmaAtualId) !== turmaId) {
-        try {
-          await apiPost(`/turmas/${turmaId}/alunos/${alunoFinalId}`, {});
-        } catch(e) {
-          // ignora se já está na turma
-        }
+        try { await apiPost(`/turmas/${turmaId}/alunos/${alunoFinalId}`, {}); } catch(e) {}
       }
     }
 
     toast(`Registro salvo! ${result.aluno}${result.serie ? ' · '+result.serie : ''}`);
     fecharModal('modal-registro');
-    todasTurmas = []; // força recarregar turmas na próxima abertura
+    todasTurmas = [];
 
-    // Atualiza stats
     const [regsData, alunosData, turmasData] = await Promise.all([
       apiFetch('/buscar'), apiFetch('/alunos'), apiFetch('/turmas')
     ]);
@@ -1368,21 +1323,17 @@ async function carregarEletivasGerenciar() {
   try {
     todasEletivasGE = await apiFetch('/eletivas/todas');
 
-    // Popula filtro de área
     const areaEl = document.getElementById('ge-filter-area');
     const areas = [...new Set(todasEletivasGE.map(e => e.area))].sort();
     areaEl.innerHTML = '<option value="">Todas as áreas</option>';
     areas.forEach(a => { const o=document.createElement('option'); o.value=a; o.textContent=a; areaEl.appendChild(o); });
 
-    // Popula select de área no modal
     const meAreaEl = document.getElementById('me-area');
-    if (meAreaEl.children.length <= 1) {
-      if (!AREAS_FIXAS.length) {
-        try { AREAS_FIXAS = await apiFetch('/areas/lista'); } catch(e) {}
-      }
-      meAreaEl.innerHTML = '';
-      AREAS_FIXAS.forEach(a => { const o=document.createElement('option'); o.value=a; o.textContent=a; meAreaEl.appendChild(o); });
+    if (!AREAS_FIXAS.length) {
+      try { AREAS_FIXAS = await apiFetch('/areas/lista'); } catch(e) {}
     }
+    meAreaEl.innerHTML = '';
+    AREAS_FIXAS.forEach(a => { const o=document.createElement('option'); o.value=a; o.textContent=a; meAreaEl.appendChild(o); });
 
     filtrarEletivasGerenciar();
   } catch(e) { el.innerHTML = '<div class="empty"><p>Erro ao carregar eletivas.</p></div>'; }
@@ -1391,13 +1342,11 @@ async function carregarEletivasGerenciar() {
 function filtrarEletivasGerenciar() {
   const area  = document.getElementById('ge-filter-area').value.toLowerCase();
   const busca = document.getElementById('ge-busca').value.toLowerCase();
-
   const filtradas = todasEletivasGE.filter(e => {
     const matchArea  = !area  || e.area.toLowerCase().includes(area);
     const matchBusca = !busca || e.nome.toLowerCase().includes(busca) || (e.professor||'').toLowerCase().includes(busca);
     return matchArea && matchBusca;
   });
-
   document.getElementById('ge-info').textContent = `${filtradas.length} eletiva(s) encontrada(s)`;
   renderEletivasGerenciar(filtradas);
 }
@@ -1405,32 +1354,46 @@ function filtrarEletivasGerenciar() {
 function renderEletivasGerenciar(data) {
   const el = document.getElementById('ge-lista');
   if (!data.length) { el.innerHTML = '<div class="empty"><div class="icon">📚</div><p>Nenhuma eletiva encontrada.</p></div>'; return; }
-
   el.innerHTML = `<div class="table-wrap"><table>
     <thead><tr>
-      <th>Nome</th>
-      <th>Área</th>
-      <th>Professor</th>
+      <th>Nome</th><th>Área</th><th>Professor</th><th>Ano</th><th>Semestre</th>
       <th style="width:80px;text-align:center">Editar</th>
     </tr></thead>
     <tbody>
       ${data.map(e => `<tr>
         <td class="nome">${e.nome}</td>
         <td><span class="badge ${badgeClass(e.area)}">${e.area}</span></td>
-        <td id="ge-prof-${e.id}" style="color:${e.professor?'var(--text)':'var(--warn)'}">${e.professor || '⚠️ Sem professor'}</td>
+        <td style="color:${e.professor?'var(--text)':'var(--warn)'}">${e.professor || '⚠️ Sem professor'}</td>
+        <td>${e.ano_letivo||'—'}</td>
+        <td>${e.semestre ? e.semestre+'º Sem.' : '—'}</td>
         <td style="text-align:center">
-          <button class="btn outline sm" onclick="abrirEditarEletiva(${e.id},'${e.nome.replace(/'/g,"\'")}','${e.area}','${(e.professor||'').replace(/'/g,"\'")}')">✏️</button>
+          <button class="btn outline sm" onclick="abrirEditarEletiva(${e.id},'${e.nome.replace(/'/g,"\'")}','${e.area}','${(e.professor||'').replace(/'/g,"\'")}',${e.ano_letivo||'null'},${e.semestre||'null'})">✏️</button>
         </td>
       </tr>`).join('')}
     </tbody>
   </table></div>`;
 }
 
-function abrirEditarEletiva(id, nome, area, professor) {
+function abrirNovaEletiva() {
+  document.getElementById('me-id').value        = '';
+  document.getElementById('me-nome').value      = '';
+  document.getElementById('me-area').value      = '';
+  document.getElementById('me-professor').value = '';
+  document.getElementById('me-ano').value       = new Date().getFullYear();
+  document.getElementById('me-semestre').value  = '';
+  document.getElementById('modal-eletiva-titulo').textContent = 'Nova Eletiva';
+  document.getElementById('modal-eletiva').classList.add('open');
+  setTimeout(() => document.getElementById('me-nome').focus(), 100);
+}
+
+function abrirEditarEletiva(id, nome, area, professor, ano, semestre) {
   document.getElementById('me-id').value        = id;
   document.getElementById('me-nome').value      = nome;
   document.getElementById('me-area').value      = area;
   document.getElementById('me-professor').value = professor;
+  document.getElementById('me-ano').value       = ano || '';
+  document.getElementById('me-semestre').value  = semestre || '';
+  document.getElementById('modal-eletiva-titulo').textContent = 'Editar Eletiva';
   document.getElementById('modal-eletiva').classList.add('open');
   setTimeout(() => document.getElementById('me-professor').focus(), 100);
 }
@@ -1440,12 +1403,21 @@ async function salvarEletiva() {
   const nome      = document.getElementById('me-nome').value.trim();
   const area      = document.getElementById('me-area').value;
   const professor = document.getElementById('me-professor').value.trim();
+  const ano       = document.getElementById('me-ano').value;
+  const semestre  = document.getElementById('me-semestre').value;
 
-  if (!nome || !area || !professor) { toast('Preencha todos os campos.', false); return; }
+  if (!nome || !area || !professor) { toast('Preencha nome, área e professor.', false); return; }
+
+  const body = { nome, area, professor, ano_letivo: ano ? parseInt(ano) : null, semestre: semestre ? parseInt(semestre) : null };
 
   try {
-    await apiPatch(`/eletivas/${id}`, { nome, area, professor });
-    toast('Eletiva atualizada!');
+    if (id) {
+      await apiPatch(`/eletivas/${id}`, body);
+      toast('Eletiva atualizada!');
+    } else {
+      await apiPost('/eletivas', body);
+      toast('Eletiva criada!');
+    }
     fecharModal('modal-eletiva');
     await carregarEletivasGerenciar();
   } catch(e) { toast('Erro: ' + e.message, false); }
